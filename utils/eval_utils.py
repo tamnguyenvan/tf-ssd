@@ -94,4 +94,4 @@ def evaluate_predictions(dataset, pred_bboxes, pred_labels, pred_scores, labels,
         stats = update_stats(batch_bboxes, batch_labels, batch_scores, gt_boxes, gt_labels, stats)
     stats, mAP = calculate_mAP(stats)
     print("mAP: {}".format(float(mAP)))
-    return stats
+    return stats, mAP

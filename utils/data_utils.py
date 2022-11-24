@@ -4,7 +4,7 @@ import tensorflow as tf
 # import tensorflow_datasets as tfds
 from PIL import Image
 import numpy as np
-from tfrecord_utils import get_tfrecord_dataset
+from .tfrecord_utils import get_tfrecord_dataset
 
 
 # def preprocessing(image_data, final_height, final_width, augmentation_fn=None, evaluate=False):
@@ -44,7 +44,7 @@ def preprocessing(image_data, final_height, final_width, augmentation_fn=None, e
         'image/object/class/label': tf.io.VarLenFeature(tf.int64),
     }
     parsed_example = tf.io.parse_single_example(image_data, example_fmt)
-    image = tf.image.decode_jpeg(parsed_example['image/encoded'])
+    image = tf.image.decode_jpeg(parsed_example['image/encoded'], channels=3)
     image_height = parsed_example['image/height']
     image_width = parsed_example['image/width']
     image = tf.reshape(image, (image_height, image_width, 3))

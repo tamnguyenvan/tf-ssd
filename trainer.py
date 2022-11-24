@@ -4,6 +4,7 @@ from tensorflow.keras.optimizers import SGD, Adam
 import augmentation
 from ssd_loss import CustomLoss
 from utils import bbox_utils, data_utils, io_utils, train_utils
+from evaluator import EvaluatorCalback
 
 args = io_utils.handle_args()
 if args.handle_gpu:
@@ -27,8 +28,10 @@ hyper_params = train_utils.get_hyper_params(backbone)
 # train_data, info = data_utils.get_dataset("voc/2007", "train+validation")
 # val_data, _ = data_utils.get_dataset("voc/2007", "test")
 
-train_data, train_total_items, labels = data_utils.get_dataset('./', './', 'train.tfrecord')
-val_data, val_total_items, _ = data_utils.get_dataset('./', './', 'val.tfrecord')
+print('creating')
+train_data, train_total_items, labels = data_utils.get_dataset('./grocery_dataset/images', './grocery_dataset/train_annotations.json', 'train.tfrecord')
+val_data, val_total_items, _ = data_utils.get_dataset('./grocery_dataset/images', './grocery_dataset/val_annotations.json', 'val.tfrecord')
+print('ok data')
 # train_total_items = data_utils.get_total_item_size(info, "train+validation")
 # val_total_items = data_utils.get_total_item_size(info, "test")
 
@@ -44,6 +47,7 @@ val_data, val_total_items, _ = data_utils.get_dataset('./', './', 'val.tfrecord'
 labels = ["bg"] + labels
 hyper_params["total_labels"] = len(labels)
 img_size = hyper_params["img_size"]
+print(labels)
 
 train_data = train_data.map(lambda x: data_utils.preprocessing(
     x, img_size, img_size, augmentation.apply))
@@ -82,9 +86,10 @@ learning_rate_callback = LearningRateScheduler(
 
 step_size_train = train_utils.get_step_size(train_total_items, batch_size)
 step_size_val = train_utils.get_step_size(val_total_items, batch_size)
+evaluator = EvaluatorCalback(val_data, step_size_val, labels, batch_size, prior_boxes, hyper_params)
 ssd_model.fit(ssd_train_feed,
               steps_per_epoch=step_size_train,
               validation_data=ssd_val_feed,
               validation_steps=step_size_val,
               epochs=epochs,
-              callbacks=[checkpoint_callback, tensorboard_callback, learning_rate_callback])
+              callbacks=[checkpoint_callback, tensorboard_callback, learning_rate_callback, evaluator])
